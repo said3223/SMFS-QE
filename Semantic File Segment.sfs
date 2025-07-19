@@ -1,0 +1,74 @@
+// SMFS-QE: Semantic Memory Filesystem - Quantum Enhanced
+// Этап 1: Определение базовых блоков памяти (2KB, 4KB, 8KB, 16KB, 32KB)
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum BlockSize {
+    B2KB = 2048,
+    B4KB = 4096,
+    B8KB = 8192,
+    B16KB = 16384,
+    B32KB = 32768,
+}
+
+#[derive(Debug)]
+pub struct MemoryBlock {
+    id: u64,
+    size: BlockSize,
+    data: Vec<u8>,
+    is_used: bool,
+    semantic_tag: Option<String>, // метка смысла
+}
+
+impl MemoryBlock {
+    pub fn new(id: u64, size: BlockSize) -> Self {
+        Self {
+            id,
+            size,
+            data: vec![0; size as usize],
+            is_used: false,
+            semantic_tag: None,
+        }
+    }
+}
+
+// Этап 2: Менеджер блоков
+use std::collections::HashMap;
+
+pub struct SMFSQEManager {
+    pub blocks: HashMap<u64, MemoryBlock>,
+    next_id: u64,
+}
+
+impl SMFSQEManager {
+    pub fn new() -> Self {
+        Self {
+            blocks: HashMap::new(),
+            next_id: 0,
+        }
+    }
+
+    pub fn allocate_block(&mut self, size: BlockSize, semantic_tag: Option<String>) -> u64 {
+        let id = self.next_id;
+        let mut block = MemoryBlock::new(id, size);
+        block.is_used = true;
+        block.semantic_tag = semantic_tag;
+        self.blocks.insert(id, block);
+        self.next_id += 1;
+        id
+    }
+
+    pub fn deallocate_block(&mut self, id: u64) {
+        if let Some(block) = self.blocks.get_mut(&id) {
+            block.is_used = false;
+            block.data.fill(0);
+            block.semantic_tag = None;
+        }
+    }
+
+    pub fn get_block(&self, id: u64) -> Option<&MemoryBlock> {
+        self.blocks.get(&id)
+    }
+}
+
+// Этап 3 будет включать сохранение структуры на диск, сжатие и квантизацию.
+// Этап 4 — интеграция с SRIS SMFS-контроллером и семантическим планировщиком.
